@@ -1,0 +1,71 @@
+PLEADE READ THIS FIRST BEFORE YOU TEST MY PROGRAM. 
+
+i) overview of my Makefile and implemention
+I have included two .c files for this project, server.c and server_no_timeout.c.
+server_no_timeout.c implements all the functions 
+(fine-grained locking, Ctrl+D, Ctrl+C) except timeout;
+server.c implements all the functions
+if you find a BUG during your testing of server.c, please refer to server_no_timeout.c 
+because this bug might be caused by timeout. 
+when you input "make" in the terminal, 2 executables will be created:
+server_no_timeout
+server
+here are the legal inputs for server_no_timeout and server in the terminal:
+server_no_timeout: Usage: ./server_no_timeout [scriptname]
+server:            Usage: ./server timeout [scriptname]
+please notice that server_no_timeout is NOT a counterpart of your demo1:
+I implemented Ctrl+C and Ctrl+D in server_no_timeout. 
+
+ii) potential non-bug problems
+these problems are NOT considered bugs, according to the HTA Ryan Roelke.
+please consult Ryan for further details.
+a) under ILLEGAL user input:
+if the user inputs an illegal script name, I will not be able to close
+the program using Ctrl+C. Since Ryan told me I can assume all the inputs are legal,
+I won't deal with this case and will leave it here.
+b) swift Ctrl+C:
+This problem also happens in your demo2, so I assume I don't need with this problem because it
+implies inherent issues with your design, under the instruction of Ryan. 
+After you have opened several clients, you quickly press Ctrl+C
+immeidately after you open a new client (in less than one second), only one client will be deleted. 
+
+iii)
+structure of my problem:
+since I made use of the stencil code which is the backbone of this program, here
+I mainly discuss the function that I added or changed:
+A) in timeout.c
+I noticed the watchdog_function in timeout.c and could not make use of it 
+when the "static" was there, so i deleted the "static".
+B) in timeout.h
+since I will be using the watchdog_function defined in timeout.c but never used before,
+I inlucded the following line:
+void *watchdog_function(void *arg);
+C) in server.c:
+a) 
+first of all, I have implemented a linked list for PthreadNodes which includes a value 
+as a pthread pointer and a pointer to the next node.
+Server functions are implemented:
+add_pthread()
+remove_pthread()
+print_pthreads() [for testing purposes, no currently used in my implementation]
+b) 
+cleanup() will be associated with a thread and 
+waits for a SIGINT to clean up all the clients in the linkedlist
+while
+cleanup_fast() will be assoiciated with a new thread after Ctrl+D is called
+and execute the clean-up process without waiting
+c) 
+cleanup_pthread_mutex_unlock()
+and
+cleanup_pthread_client_delete()
+are two wrappers to be pushed to the cleanup handler.
+Please refer to the in-line comments for details. 
+d)
+pthread_deletion_wrapper() is 
+a wrapper to be executed by the watchdog when time is up
+
+For details, please refer to my in-line comments. 
+I have comments for every new functions and global variables I added. 
+
+
+
